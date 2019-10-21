@@ -6,7 +6,7 @@
 int main() {
 
 	FILE *f = fopen("log.csv", "r");
-	char buff[255];
+	char buff[300];
 	char **lines;
 	int filelen = 0, linelen, maxlinelen = 0;
 
@@ -18,7 +18,7 @@ int main() {
 		if (feof(f))
 			break;			
 		filelen++;
-		fgets(buff, 255, (FILE*)f); // Consumes until 255 chars or end of line.
+		fgets(buff, 300, (FILE*)f); // Consumes until 255 chars or end of line.
 		linelen = strlen(buff);
 		if (linelen > maxlinelen)
 			maxlinelen = linelen;	
@@ -29,7 +29,7 @@ int main() {
 	int i;
 	for (i = 0; i < filelen; i++) {
 		lines[i] = malloc(sizeof(char *) * maxlinelen);
-		fgets(lines[i], 255, (FILE*)f);
+		fgets(lines[i], 300, (FILE*)f);
 		printf("%s\n", lines[i]);
 	}
 	
