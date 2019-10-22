@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <mpi.h>
 
+#define MASTER_NODE_RANK 0
 
 char ** createArray(FILE * logFile, char ** lines, int * filelength) { // Function to get the number of lines, and put them into an array.
 
@@ -54,16 +56,28 @@ void printArray(char ** lines, int filelength) {
 
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
+  int numtasks, taskid, source, dest, nTagArrayOffset, nTagArrayData;
   char ** lines;
   FILE * logFile = fopen("log.csv", "r"); // Open our logfile in read mode. 
   int * filelength = malloc(sizeof(int)); // Allocate some memory for our file size
 
   // This function creates an array filled with the lines, and also will set the filelength pointer to the length of the file.
-  lines = createArray(logFile, lines, filelength);
-  printf("Length: %d", * filelength);
+  
+MPI_Init(&argc, &argv);
+MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
+if (taskid == MASTER_NODE_RANK){          //Master Node logic.
+	lines = createArray(logFile, lines, filelength);
+	printf("Length: %d", * filelength);
+}
 
-  printArray(lines, * filelength);
+MPI_Finalize();
+
+
+printArray(lines, * filelength);
+
+printf("%d WORLD RANK",taskid);
+
   freeMem(* filelength,lines);
-
 }
