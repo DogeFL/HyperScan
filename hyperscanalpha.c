@@ -64,5 +64,6 @@ int main(void) {
   printf("Length: %d", * filelength);
 
   printArray(lines, * filelength);
+  freeMem(* filelength,lines);
 
 }
