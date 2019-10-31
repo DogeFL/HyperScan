@@ -122,11 +122,11 @@ for (i=0;i<workperNode;i++){
 printf("%s",temparr[1]); // now we have a nice array of pointers, where we can now create func
 
 printf("%d",scanarray(temparr,workperNode));
-MPI_Finalize();
 
 }
 //printArray(lines, * filelength);
 
+MPI_Finalize();
 
 return 0;
 } // End main function
