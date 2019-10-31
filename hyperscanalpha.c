@@ -6,8 +6,6 @@
 
 #define MASTER_NODE_RANK 0
 
-
-
 void do_timer(int nNode, char *strEvent, bool bStart, bool bDisplayDuration, double *dStartTime, double *dEndTime, double *dTimeDuration);
 
 void freeMem(int filelen, char ** lines);
@@ -16,13 +14,29 @@ char ** createArray(FILE * logFile, char ** lines, int * filelength);
 
 void printArray(char ** lines, int filelength);
 
+int scanarray(char ** array, int length){
+//logic goes here, just a test for now
+int i;
+printf("Scanning array now... ");
+char * searcher;
+
+for (i=0; i<length;i++){
+searcher = strstr(array[i], "allalal"); 
+if (searcher!= NULL){return 1;}
+
+}
+return 0;
+
+}
+
 
 int main(int argc, char *argv[]) {
 
   double dTimeDuration=0, dStartTime=0, dEndTime=0;
 
-  int numtasks, taskid, source, dest, nTagArrayOffset, nTagArrayData;
+  int numtasks, taskid, source, dest, nTagArrayOffset, nTagArrayData, offset =0;
   char ** lines;
+  //MUST BE NAMED LOG.CSV for now
   FILE * logFile = fopen("log.csv", "r"); // Open our logfile in read mode. 
   int * filelength = malloc(sizeof(int)); // Allocate some memory for our file size
 
@@ -34,20 +48,47 @@ MPI_Status status;
 MPI_Init(&argc, &argv);
 MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 MPI_Comm_rank(MPI_COMM_WORLD, &taskid);
+int tag1,tag2, workperNode, workLeft;
+tag2 = 1;
+tag1 = 2;
+
+
 
 if (taskid == MASTER_NODE_RANK){          //Master Node logic.
-	lines = createArray(logFile, lines, filelength); // We send an empty memory address, so function can fill it in.
-	printf("There are : %d Elements in the array \n", * filelength);
-	printf("I have %d Workers ready to work \n" , numtasks);
+  printf("Array has been initialized...");
+  lines = createArray(logFile, lines, filelength); // We send an empty memory address, so function can fill it in.
+  printf("There are : %d Elements in the array \n", * filelength);
+  printf("I have %d Workers ready to work \n" , numtasks);
 
+  //the first step will be to chop the array into pieces each array can handle.
+  //Debugging
+  printf("lines mem 1: %p \n", &(lines[0][0]));
+  printf("lines mem 2: %p \n", &(lines[1][0]));
+  printf("lines mem 3: %p \n", &(lines[2][0]));
 
+   
 
- 	//the first step will be to chop the array into pieces each array can handle.
+   workperNode = (*filelength / numtasks );
+   workLeft = (*filelength % numtasks );
+    printf("Each node will recieve %d elements to search \n" , workperNode);
+    printf("With %d left over \n" , workLeft);
+   int i,start,end;
 
-	int workperNode = (*filelength / numtasks );
-	int workLeft = (*filelength % numtasks );
-		printf("Each node will recieve %d elements to search \n" , workperNode);
-		printf("With %d left over \n" , workLeft);
+offset = 0;
+  for (dest=1; dest<numtasks; dest++) {
+    MPI_Send(&workperNode, 1, MPI_INT, dest, 3, MPI_COMM_WORLD);
+    MPI_Send(&offset, 1, MPI_CHAR, dest, tag1, MPI_COMM_WORLD);
+    end = workperNode;
+
+    for (i=offset;i<end;i++){
+    MPI_Send(&(lines[i][0]), workperNode+1, MPI_CHAR, dest, tag2, MPI_COMM_WORLD);
+    //printf("Sent %d elements to task %d offset= %d\n",workperNode,dest,offset);
+   }
+     offset = offset + workperNode;
+    end = end + workperNode;
+ }
+    
+
 
 /*
 int i=0;
@@ -64,13 +105,26 @@ printf("%s\n", greeting);
 }
 
 if (taskid > MASTER_NODE_RANK){           // Slave nodes
+  source = MASTER_NODE_RANK;
+   //This will send the buffer size, since the master created it.
+    MPI_Recv(&workperNode, 1, MPI_INT, source, 3, MPI_COMM_WORLD, &status);
+//MPI_Recv(&offset, 1, MPI_INT, source, tag1, MPI_COMM_WORLD, &status);
+  char * buf;
+  buf = malloc(workperNode+1 * sizeof(char));
+  int i;
 
+ char * temparr[workperNode];
+for (i=0;i<workperNode;i++){
+  MPI_Recv(buf, workperNode+1, MPI_CHAR, source, tag2, MPI_COMM_WORLD, &status);
+  temparr[i] = buf;
 }
 
+printf("%s",temparr[1]); // now we have a nice array of pointers, where we can now create func
 
+printf("%d",scanarray(temparr,workperNode));
 MPI_Finalize();
 
-
+}
 //printArray(lines, * filelength);
 
 
